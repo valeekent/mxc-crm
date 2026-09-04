@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEXC Outreach CRM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#0B0E13;
+    --surface:#12161D;
+    --surface-2:#1A1F28;
+    --surface-3:#212734;
+    --border:#262C38;
+    --border-soft:#1D222C;
+    --text:#E7EAF0;
+    --text-dim:#8B93A3;
+    --text-faint:#5A6272;
+    --accent:#E8A63C;
+    --accent-dim:#8A6626;
+    --blue:#4EA1FF;
+    --green:#3DDC84;
+    --amber:#E8A63C;
+    --red:#F2545B;
+    --gray:#5B6472;
+
+    --font-display:'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-body:'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent); color:#1a1206;}
+
+  a{color:var(--blue); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  button{
+    font-family:var(--font-body);
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:500;
+    transition:all .12s ease;
+  }
+  button:hover{background:var(--surface-3); border-color:#333b4a;}
+  button:active{transform:translateY(1px);}
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--blue); outline-offset:1px;
+  }
+  button.primary{
+    background:var(--accent); color:#1a1206; border-color:var(--accent); font-weight:600;
+  }
+  button.primary:hover{background:#f0b459;}
+  button.ghost{background:transparent;}
+  button.danger{color:var(--red); border-color:#3a2226;}
+  button.small{padding:5px 10px; font-size:12px; border-radius:6px;}
+
+  input[type="text"], input[type="number"], input[type="date"], select, textarea{
+    font-family:var(--font-body);
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:7px;
+    padding:7px 10px;
+    font-size:13px;
+  }
+  select{cursor:pointer;}
+
+  /* ---------- layout shell ---------- */
+  #app{display:flex; flex-direction:column; min-height:100vh;}
+
+  header.topbar{
+    position:sticky; top:0; z-index:30;
+    background:rgba(11,14,19,.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    padding:14px 22px;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:baseline; gap:9px; margin-right:auto;}
+  .brand .mark{
+    font-family:var(--font-display); font-weight:700; font-size:19px; letter-spacing:-.02em;
+    color:var(--text);
+  }
+  .brand .mark span{color:var(--accent);}
+  .brand .tag{color:var(--text-faint); font-size:12px;}
+
+  .toolbar-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  #fileInputXlsx, #fileInputJson{display:none;}
+
+  .status-pill{
+    font-size:11px; color:var(--text-faint); font-family:var(--font-mono);
+    padding:4px 9px; border:1px solid var(--border); border-radius:20px;
+    display:none;
+  }
+  .status-pill.show{display:inline-block;}
+  .status-pill.ok{color:var(--green); border-color:#1f4531;}
+
+  /* ---------- hero / funnel ---------- */
+  .hero{
+    padding:22px 22px 6px;
+    display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;
+  }
+  .funnel-card{
+    background:var(--surface);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:14px 16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .funnel-card .n{
+    font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+    font-size:26px; font-weight:600; line-height:1;
+  }
+  .funnel-card .lbl{
+    margin-top:6px; font-size:11.5px; color:var(--text-dim); font-weight:500;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .funnel-card .bar{
+    position:absolute; left:0; bottom:0; height:3px; border-radius:0 3px 0 0;
+  }
+  .fc-total .n{color:var(--text);}
+  .fc-sent .n{color:var(--blue);} .fc-sent .bar{background:var(--blue);}
+  .fc-followup .n{color:var(--amber);} .fc-followup .bar{background:var(--amber);}
+  .fc-interested .n{color:var(--green);} .fc-interested .bar{background:var(--green);}
+  .fc-partner .n{color:var(--accent);} .fc-partner .bar{background:var(--accent);}
+  .fc-closed .n{color:var(--text-faint);} .fc-closed .bar{background:var(--gray);}
+
+  /* ---------- filters ---------- */
+  .filters{
+    padding:14px 22px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .filters input[type="text"]{width:260px;}
+  .filters .grow{flex:1;}
+  .filters .count{color:var(--text-faint); font-size:12.5px; font-family:var(--font-mono); white-space:nowrap;}
+
+  /* ---------- table ---------- */
+  main{flex:1; padding:0 22px 40px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; margin-top:10px;}
+  thead th{
+    position:sticky; top:0; background:var(--bg); z-index:5;
+    text-align:left; font-size:11px; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:.04em; font-weight:600;
+    padding:9px 10px; border-bottom:1px solid var(--border);
+    cursor:pointer; white-space:nowrap; user-select:none;
+  }
+  thead th:hover{color:var(--text-dim);}
+  thead th.sorted{color:var(--accent);}
+  thead th .arrow{font-size:9px; margin-left:3px; opacity:.7;}
+
+  tbody tr{border-bottom:1px solid var(--border-soft); transition:background .1s;}
+  tbody tr:hover{background:var(--surface);}
+  tbody tr.is-open{background:var(--surface-2);}
+  tbody td{padding:9px 10px; vertical-align:middle;}
+
+  td.col-username{font-family:var(--font-mono); font-size:12.5px;}
+  td.col-title{max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim);}
+  td.col-num{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;}
+  td.col-lang{color:var(--text-faint); font-size:12px;}
+  td.col-notes-flag{text-align:center; width:24px;}
+  td.col-deadline{white-space:nowrap;}
+
+  .lang-badge{
+    font-size:10.5px; padding:2px 7px; border-radius:5px; border:1px solid var(--border);
+    color:var(--text-faint); font-family:var(--font-mono);
+  }
+  .lang-badge.ru{color:#7fb8ff; border-color:#1f3350;}
+  .lang-badge.ua{color:#ffe27a; border-color:#4a4020;}
+
+  select.stage-select, select.outcome-select{
+    width:100%; min-width:130px; font-size:12px; padding:5px 8px; border-radius:6px; font-weight:600;
+  }
+  input.pct-input{
+    width:64px; text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+    padding:5px 7px; font-size:12.5px;
+  }
+  td.col-notes-flag input[type="checkbox"]{
+    width:15px; height:15px; accent-color:var(--accent); cursor:pointer;
+  }
+  select.stage-select.stg-0{color:var(--gray);}
+  select.stage-select.stg-1{color:var(--blue);}
+  select.stage-select.stg-2{color:var(--amber);}
+  select.stage-select.stg-3{color:var(--accent); font-weight:700;}
+  select.outcome-select.oc-{color:var(--text-dim);}
+  select.outcome-select.oc-retry{color:var(--red); font-weight:700;}
+  select.outcome-select.oc-thinking{color:var(--amber);}
+  select.outcome-select.oc-no_response_final{color:var(--text-faint);}
+  select.outcome-select.oc-declined{color:var(--text-faint);}
+  select.outcome-select.oc-partner_active{color:var(--green); font-weight:700;}
+
+  .notes-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--accent);
+    display:inline-block; margin:0 auto;
+  }
+
+  .row-btn{
+    background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    padding:4px 9px; border-radius:6px; font-size:11.5px;
+  }
+  .row-btn:hover{border-color:var(--blue); color:var(--blue);}
+
+  /* ---------- drawer ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(6,7,10,.6);
+    opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:40;
+  }
+  #overlay.show{opacity:1; pointer-events:auto;}
+
+  #drawer{
+    position:fixed; top:0; right:0; height:100%; width:420px; max-width:92vw;
+    background:var(--surface); border-left:1px solid var(--border);
+    transform:translateX(100%); transition:transform .2s ease;
+    z-index:50; display:flex; flex-direction:column;
+  }
+  #drawer.show{transform:translateX(0);}
+
+  /* ---------- nav sidebar (left) ---------- */
+  #navOverlay{
+    position:fixed; inset:0; background:rgba(6,7,10,.6);
+    opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:40;
+  }
+  #navOverlay.show{opacity:1; pointer-events:auto;}
+  #navSidebar{
+    position:fixed; top:0; left:0; height:100%; width:320px; max-width:88vw;
+    background:var(--surface); border-right:1px solid var(--border);
+    transform:translateX(-100%); transition:transform .2s ease;
+    z-index:50; display:flex; flex-direction:column;
+  }
+  #navSidebar.show{transform:translateX(0);}
+  .nav-list{padding:10px; display:flex; flex-direction:column; gap:6px;}
+  .nav-item{
+    display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    text-align:left; padding:14px 16px; border-radius:10px;
+    background:var(--surface-2); border:1px solid var(--border-soft);
+    cursor:pointer; position:relative;
+  }
+  .nav-item:hover{border-color:var(--blue);}
+  .nav-item.active{border-color:var(--accent); background:var(--surface-3);}
+  .nav-item-label{font-family:var(--font-display); font-weight:600; font-size:14.5px;}
+  .nav-item-sub{color:var(--text-faint); font-size:11.5px;}
+  .nav-item-count{
+    position:absolute; top:12px; right:14px; font-family:var(--font-mono);
+    font-size:12px; color:var(--text-dim); font-weight:600;
+  }
+
+  .deadline-badge{
+    font-family:var(--font-mono); font-size:11px; padding:2px 8px; border-radius:10px;
+    display:inline-block; white-space:nowrap;
+  }
+  .deadline-badge.ok{background:#132a1c; color:var(--green);}
+  .deadline-badge.soon{background:#332411; color:var(--amber);}
+  .deadline-badge.over{background:#3a1216; color:var(--red);}
+  .drawer-head{
+    padding:18px 20px; border-bottom:1px solid var(--border-soft);
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+  }
+  .drawer-head h2{font-family:var(--font-display); font-size:17px; font-weight:600;}
+  .drawer-head .sub{color:var(--text-faint); font-size:12.5px; margin-top:3px; font-family:var(--font-mono);}
+  .drawer-close{background:transparent; border:none; color:var(--text-faint); font-size:20px; line-height:1; padding:2px 6px;}
+  .drawer-close:hover{color:var(--text);}
+
+  .drawer-body{padding:18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px;}
+  .field-group label{
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--text-faint); margin-bottom:6px; font-weight:600;
+  }
+  .field-group select, .field-group input, .field-group textarea{width:100%;}
+  .field-row{display:flex; gap:10px;}
+  .field-row > div{flex:1;}
+  textarea{resize:vertical; min-height:90px; font-family:var(--font-body); line-height:1.5;}
+  .about-box{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:8px;
+    padding:10px 12px; font-size:12.5px; color:var(--text-dim); line-height:1.55; max-height:160px; overflow-y:auto;
+  }
+  .quick-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
+  /* ---------- todo panel ---------- */
+  #todoPanel{
+    position:fixed; bottom:20px; right:20px; width:300px; max-width:88vw;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 10px 34px rgba(0,0,0,.4); z-index:35;
+    display:none; flex-direction:column; max-height:60vh;
+  }
+  #todoPanel.show{display:flex;}
+  .todo-head{
+    padding:12px 14px; border-bottom:1px solid var(--border-soft);
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--font-display); font-weight:600; font-size:13.5px;
+  }
+  .todo-add{padding:10px 14px; display:flex; gap:6px; border-bottom:1px solid var(--border-soft);}
+  .todo-add input{flex:1;}
+  .todo-list{overflow-y:auto; padding:6px 8px;}
+  .todo-item{
+    display:flex; align-items:flex-start; gap:8px; padding:7px 8px; border-radius:7px; font-size:13px;
+  }
+  .todo-item:hover{background:var(--surface-2);}
+  .todo-item.done span{color:var(--text-faint); text-decoration:line-through;}
+  .todo-item input[type="checkbox"]{margin-top:3px; accent-color:var(--accent);}
+  .todo-item span{flex:1; line-height:1.4;}
+  .todo-del{background:none; border:none; color:var(--text-faint); font-size:15px; padding:0 4px; cursor:pointer;}
+  .todo-del:hover{color:var(--red);}
+  #todoFab{
+    position:fixed; bottom:20px; right:20px; z-index:34;
+    width:46px; height:46px; border-radius:50%;
+    background:var(--accent); color:#1a1206; border:none;
+    font-size:20px; font-weight:700; box-shadow:0 6px 20px rgba(232,166,60,.35);
+  }
+
+  /* ---------- tasks panel (auto-computed follow-ups) ---------- */
+  #tasksPanel{
+    position:fixed; bottom:20px; right:76px; width:340px; max-width:88vw;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 10px 34px rgba(0,0,0,.4); z-index:35;
+    display:none; flex-direction:column; max-height:66vh;
+  }
+  #tasksPanel.show{display:flex;}
+  .task-item{
+    display:flex; flex-direction:column; gap:3px; padding:10px 14px;
+    border-bottom:1px solid var(--border-soft); font-size:12.5px; cursor:pointer;
+  }
+  .task-item:hover{background:var(--surface-2);}
+  .task-item .tname{font-weight:600; color:var(--text); font-size:13px;}
+  .task-item .treason{color:var(--text-dim);}
+  .task-item .tdays{
+    display:inline-block; font-family:var(--font-mono); font-size:11px;
+    padding:1px 7px; border-radius:10px; margin-top:2px; width:fit-content;
+  }
+  .task-item .tdays.urgent{background:#3a1216; color:var(--red);}
+  .task-item .tdays.mild{background:#332411; color:var(--amber);}
+  #tasksFab{
+    position:fixed; bottom:20px; right:76px; z-index:34;
+    width:46px; height:46px; border-radius:50%;
+    background:var(--blue); color:#08121e; border:none;
+    font-size:19px; font-weight:700; box-shadow:0 6px 20px rgba(78,161,255,.35);
+  }
+  #tasksFab .badge{
+    position:absolute; top:-4px; right:-4px; background:var(--red); color:#fff;
+    font-size:10px; font-weight:700; border-radius:9px; min-width:18px; height:18px;
+    line-height:18px; text-align:center; padding:0 3px; font-family:var(--font-mono);
+  }
+
+  .empty-state{
+    padding:70px 20px; text-align:center; color:var(--text-faint);
+  }
+  .empty-state .big{font-family:var(--font-display); font-size:19px; color:var(--text-dim); margin-bottom:8px;}
+  .empty-state button{margin-top:16px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:repeat(3,1fr);}
+    #drawer{width:100vw;}
+    #navSidebar{width:100vw;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <button id="navBtn" class="ghost" title="Разделы" style="font-size:16px; padding:8px 12px;">☰</button>
+    <div class="brand">
+      <span class="mark">MEXC<span>.</span>CRM</span>
+      <span class="tag">outreach tracker — трейдинг-каналы</span>
+      <span class="status-pill show" id="syncPill" style="color:var(--text-faint);">⚪ Локально</span>
+    </div>
+    <div class="toolbar-actions">
+      <span class="status-pill" id="statusPill"></span>
+      <button id="btnImportXlsx">Импорт XLSX</button>
+      <button id="btnLoadJson" class="ghost">Загрузить сохранение</button>
+      <button id="btnCalcAll" class="ghost" title="Заполняет % только там, где поле ещё пустое">⚡ Рассчитать % всем</button>
+      <button id="btnSaveJson" class="primary">Сохранить прогресс</button>
+      <input type="file" id="fileInputXlsx" accept=".xlsx,.xls">
+      <input type="file" id="fileInputJson" accept=".json">
+    </div>
+  </header>
+
+  <div class="hero" id="hero"></div>
+
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Поиск: username, название, описание, контакт…">
+    <select id="filterStage">
+      <option value="">Стадия: все</option>
+      <option value="0">Не написано</option>
+      <option value="1">Сообщение 1</option>
+      <option value="2">Сообщение 2 (условия)</option>
+      <option value="3">Переговоры</option>
+    </select>
+    <select id="filterOutcome">
+      <option value="">Ответ: все</option>
+      <option value="waiting">Ждём ответа</option>
+      <option value="retry">Не ответил — написать ещё раз</option>
+      <option value="thinking">Я подумаю</option>
+      <option value="no_response_final">Не ответил окончательно</option>
+      <option value="declined">Отказался</option>
+      <option value="partner_active">Партнёрка активна</option>
+    </select>
+    <select id="filterLang">
+      <option value="">Язык: все</option>
+      <option value="ru">ru</option>
+      <option value="ua">ua</option>
+      <option value="en">en/other</option>
+    </select>
+    <input type="number" id="filterMinSubs" placeholder="Мин. подписчиков" style="width:150px;">
+    <input type="number" id="filterMinPct" placeholder="Мин. % партнёрки" style="width:150px;" min="0" max="100">
+    <div class="grow"></div>
+    <span class="count" id="filteredCount"></span>
+  </div>
+
+  <main>
+    <table id="dataTable" style="display:none;">
+      <thead>
+        <tr id="tableHeadRow"></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState">
+      <div class="big">Пока пусто</div>
+      <div>Импортируй combined_channels.xlsx (или свою версию таблицы) — колонки распознаются автоматически.</div>
+      <button class="primary" id="emptyImportBtn">Импорт XLSX</button>
+    </div>
+  </main>
+
+</div>
+
+<button id="tasksFab" title="Задачи (авто, по срокам)">⏰<span class="badge" id="tasksBadge" style="display:none;"></span></button>
+<div id="tasksPanel">
+  <div class="todo-head">
+    <span>Задачи</span>
+    <button class="drawer-close" id="tasksClose">✕</button>
+  </div>
+  <div class="todo-list" id="tasksList"></div>
+</div>
+
+<button id="todoFab" title="Заметки (ручной список)">✓</button>
+<div id="todoPanel">
+  <div class="todo-head">
+    <span>To-do</span>
+    <button class="drawer-close" id="todoClose">✕</button>
+  </div>
+  <div class="todo-add">
+    <input type="text" id="todoInput" placeholder="Новая задача…">
+    <button class="small primary" id="todoAddBtn">+</button>
+  </div>
+  <div class="todo-list" id="todoList"></div>
+</div>
+
+<div id="navOverlay"></div>
+<div id="navSidebar">
+  <div class="drawer-head">
+    <h2 style="font-size:16px;">Разделы</h2>
+    <button class="drawer-close" id="navClose">✕</button>
+  </div>
+  <div class="nav-list">
+    <button class="nav-item" data-view="new">
+      <span class="nav-item-label">🆕 Новые</span>
+      <span class="nav-item-sub">Ещё не написали, есть 24ч</span>
+      <span class="nav-item-count" id="navCountNew">0</span>
+    </button>
+    <button class="nav-item" data-view="main">
+      <span class="nav-item-label">📋 Основной</span>
+      <span class="nav-item-sub">В работе / переговоры</span>
+      <span class="nav-item-count" id="navCountMain">0</span>
+    </button>
+    <button class="nav-item" data-view="success">
+      <span class="nav-item-label">✅ Успех</span>
+      <span class="nav-item-sub">Договорились, трекаем результат</span>
+      <span class="nav-item-count" id="navCountSuccess">0</span>
+    </button>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="drawer">
+  <div class="drawer-head">
+    <div>
+      <h2 id="drawerTitle">—</h2>
+      <div class="sub" id="drawerSub">—</div>
+    </div>
+    <button class="drawer-close" id="drawerClose">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="field-row">
+      <div class="field-group">
+        <label>Стадия</label>
+        <select id="drawerStage"></select>
+      </div>
+      <div class="field-group">
+        <label>Ответ</label>
+        <select id="drawerOutcome"></select>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>% партнёрки</label>
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="drawerPercent" min="0" max="100" step="1" placeholder="30–50" style="flex:1;">
+        <button class="small ghost" id="drawerCalcPercent" title="Рассчитать по подписчикам и ER">⚡ Рассчитать</button>
+      </div>
+    </div>
+    <div class="quick-actions">
+      <button class="small" id="qaStage1Today">Сообщение 1 сегодня</button>
+      <button class="small" id="qaStage2Today">Сообщение 2 сегодня</button>
+      <button class="small" id="qaNegotiating">Переговоры</button>
+    </div>
+    <div class="about-box" id="drawerDates">—</div>
+    <div class="field-group">
+      <label>Отправка</label>
+      <div class="quick-actions">
+        <button class="small" id="drawerOpenChannel">Канал</button>
+        <button class="small primary" id="drawerOpenAdmin">Админ</button>
+      </div>
+      <div style="font-size:11.5px; color:var(--text-faint); margin-top:8px; line-height:1.5;">
+        "Админ" открывает чат — он попадёт в верх списка недавних в Telegram,
+        дальше: Избранное → Forward на нужное сообщение → выбираешь этот чат.
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Заметки</label>
+      <textarea id="drawerNotes" placeholder="Что ответил, договорённости, % партнёрки…"></textarea>
+    </div>
+    <div class="field-group">
+      <label>Контакт</label>
+      <div class="about-box" id="drawerContact">—</div>
+    </div>
+    <div class="field-group">
+      <label>Описание канала (raw)</label>
+      <div class="about-box" id="drawerAbout">—</div>
+    </div>
+    <div class="field-group">
+      <label>Метрики</label>
+      <div class="about-box" id="drawerMetrics">—</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- state ----------------
+  /** @type {Map<string, object>} keyed by lowercase username without @ */
+  let rows = new Map();
+  let todos = [];
+  let sortKey = "subscribers";
+  let sortDir = -1;
+  let openUsername = null;
+  let currentView = "main"; // "new" | "main" | "success"
+  const NEW_DEADLINE_HOURS = 24;
+
+  const STAGE_META = {
+    0: {label:"Не написано",              cls:"stg-0"},
+    1: {label:"Сообщение 1",              cls:"stg-1"},
+    2: {label:"Сообщение 2 (условия)",    cls:"stg-2"},
+    3: {label:"Переговоры",               cls:"stg-3"},
+  };
+  const OUTCOME_META = {
+    waiting:            {label:"Ждём ответа",                 cls:"oc-"},
+    retry:              {label:"Не ответил — написать ещё раз", cls:"oc-retry"},
+    thinking:           {label:"Я подумаю",                   cls:"oc-thinking"},
+    no_response_final:  {label:"Не ответил окончательно",     cls:"oc-no_response_final"},
+    declined:           {label:"Отказался",                   cls:"oc-declined"},
+    partner_active:     {label:"Партнёрка активна",            cls:"oc-partner_active"},
+  };
+  // стадии/ответы, при которых канал считается "закрытым" — не ждём больше
+  // действий и не показываем в задачах-с-таймингом
+  const TERMINAL_OUTCOMES = new Set(["no_response_final", "declined", "partner_active"]);
+  // сколько дней тишины считать поводом для задачи "напомнить о себе"
+  const TASK_THRESHOLD_DAYS = {1: 2, 2: 3, 3: 3, thinking: 5};
+
+  const COLUMNS = [
+    {key:"username",     label:"Username",  sortable:true},
+    {key:"title",        label:"Название",  sortable:true},
+    {key:"subscribers",  label:"Подп.",     sortable:true, num:true},
+    {key:"er",           label:"ER %",      sortable:true, num:true},
+    {key:"language",     label:"Язык",      sortable:true},
+    {key:"stage",        label:"Стадия",    sortable:true},
+    {key:"outcome",      label:"Ответ",     sortable:true},
+    {key:"commissionPercent", label:"% партнёрки", sortable:true, num:true},
+    {key:"deadline",     label:"Дедлайн",   sortable:false},
+    {key:"notesFlag",    label:"",          sortable:false},
+    {key:"open",         label:"",          sortable:false},
+  ];
+
+  // ---------------- helpers ----------------
+  function normUser(u){
+    return (u || "").toString().trim().replace(/^@/, "").toLowerCase();
+  }
+  function fmtNum(n){
+    if(n === null || n === undefined || n === "") return "";
+    const v = Number(n);
+    if(Number.isNaN(v)) return String(n);
+    return v.toLocaleString("ru-RU");
+  }
+  function fmtEr(n){
+    if(n === null || n === undefined || n === "") return "";
+    const v = Number(n);
+    if(Number.isNaN(v)) return "";
+    return v.toFixed(2);
+  }
+  function langClass(lang){
+    const l = (lang || "").toLowerCase();
+    if(l.startsWith("ru")) return "ru";
+    if(l.startsWith("ua") || l.includes("укр")) return "ua";
+    return "";
+  }
+  function todayISO(){
+    return new Date().toISOString().slice(0,10);
+  }
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ---------------- column detection (xlsx import) ----------------
+  const HEADER_ALIASES = {
+    username:     [/\busername\b/i],
+    title:        [/^название$/i, /\btitle\b/i, /назв/i],
+    subscribers:  [/подписчик/i, /\bsubscri/i],
+    er:           [/\ber\s*%/i, /^er$/i, /\bengagement\b/i],
+    language:     [/язык/i, /\blanguage\b/i],
+    lastActivity: [/последн/i, /\bactivity\b/i],
+    contact:      [/контакт/i, /\bcontact\b/i],
+    about:        [/описан/i, /\babout\b/i, /\braw\b/i, /текст/i],
+    source:       [/источник/i, /\bsource\b/i],
+    topicRel:     [/тематик/i, /\brelevant\b/i],
+    mexcCount:    [/mexc\s*упомин/i, /\bmexc\s*count\b/i],
+    mexcQuotes:   [/mexc\s*цитат/i, /\bmexc\s*quote/i],
+  };
+
+  function detectColumns(headerRow){
+    const map = {};
+    headerRow.forEach((h, idx) => {
+      const text = (h || "").toString().trim();
+      if(!text) return;
+      for(const field in HEADER_ALIASES){
+        if(map[field] !== undefined) continue;
+        if(HEADER_ALIASES[field].some(rx => rx.test(text))){
+          map[field] = idx;
+        }
+      }
+    });
+    return map;
+  }
+
+  function importXlsx(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:""});
+        if(!data.length){ showStatus("Файл пустой", false); return; }
+        const colMap = detectColumns(data[0]);
+        if(colMap.username === undefined){
+          showStatus("Не нашёл колонку Username — проверь заголовки", false);
+          return;
+        }
+        let added = 0, updated = 0;
+        for(let i=1; i<data.length; i++){
+          const r = data[i];
+          if(!r || !r.length) continue;
+          const rawUser = r[colMap.username];
+          const uname = normUser(rawUser);
+          if(!uname) continue;
+
+          const incoming = {
+            username: uname,
+            title: colMap.title !== undefined ? String(r[colMap.title] ?? "") : "",
+            subscribers: colMap.subscribers !== undefined ? Number(r[colMap.subscribers]) || 0 : 0,
+            er: colMap.er !== undefined ? Number(String(r[colMap.er]).replace(",",".")) || 0 : 0,
+            language: colMap.language !== undefined ? String(r[colMap.language] ?? "") : "",
+            lastActivity: colMap.lastActivity !== undefined ? String(r[colMap.lastActivity] ?? "") : "",
+            contact: colMap.contact !== undefined ? String(r[colMap.contact] ?? "") : "",
+            about: colMap.about !== undefined ? String(r[colMap.about] ?? "") : "",
+            source: colMap.source !== undefined ? String(r[colMap.source] ?? "") : "",
+            mexcCount: colMap.mexcCount !== undefined ? Number(r[colMap.mexcCount]) || 0 : 0,
+            mexcQuotes: colMap.mexcQuotes !== undefined ? String(r[colMap.mexcQuotes] ?? "") : "",
+          };
+
+          if(rows.has(uname)){
+            const existing = rows.get(uname);
+            // обновляем "сырые" данные о канале, но не трогаем CRM-поля
+            Object.assign(existing, incoming);
+            updated++;
+          } else {
+            rows.set(uname, Object.assign({
+              stage:0, outcome:"waiting", commissionPercent:"", notes:"",
+              dateStage1:"", dateStage2:"", lastActionDate:"", dateAdded: todayISO(),
+            }, incoming));
+            added++;
+          }
+        }
+        showStatus(`Импорт: +${added} новых, ${updated} обновлено`, true);
+        render();
+      } catch(err){
+        console.error(err);
+        showStatus("Ошибка чтения файла: " + err.message, false);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ---------------- save / load progress (JSON) ----------------
+  const LS_KEY = "lachuga_crm_autosave_v1";
+
+  // ---------------- Firebase (общие данные с другими людьми) ----------------
+  // Впиши сюда свой firebaseConfig из Project settings → Your apps.
+  // Если оставить пустым — CRM просто работает локально (localStorage),
+  // как и раньше, ничего не сломается.
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCnzcJYU7TzYLn0PgTEiIJS7jqwxJjjRTs",
+    databaseURL: "mxc-crm.firebaseapp.com",
+    projectId: "mxc-crm",
+  };
+  const FIREBASE_PATH = "lachuga_crm_state"; // все, кто подключены к этому же проекту, делят одни данные по этому пути
+
+  let fbRef = null;
+  let fbEnabled = false;
+  let applyingRemoteUpdate = false; // чтобы не зациклить: применили чужие данные -> не пушим их тут же обратно
+
+  function initFirebase(){
+    if(!FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.databaseURL){
+      console.info("Firebase не настроен — работаем локально (localStorage).");
+      return;
+    }
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      fbRef = firebase.database().ref(FIREBASE_PATH);
+      fbEnabled = true;
+      const pill = document.getElementById("syncPill");
+      pill.textContent = "🟢 Общий доступ";
+      pill.style.color = "var(--green)";
+
+      fbRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        if(!data) return;
+        applyingRemoteUpdate = true;
+        rows = new Map();
+        (data.rows || []).forEach(r => { if(r.username) rows.set(normUser(r.username), r); });
+        todos = data.todos || [];
+        render();
+        applyingRemoteUpdate = false;
+        showStatus("Обновлено (совместные данные)", true);
+      });
+    } catch(err){
+      console.warn("Не смог подключиться к Firebase — работаем локально:", err);
+      fbEnabled = false;
+    }
+  }
+
+  let fbSaveTimer = null;
+  function saveToFirebase(){
+    if(!fbEnabled || applyingRemoteUpdate) return;
+    clearTimeout(fbSaveTimer);
+    fbSaveTimer = setTimeout(() => {
+      fbRef.set(serializeState()).catch(err => {
+        console.warn("Не смог отправить в Firebase:", err);
+        showStatus("Не удалось синхронизировать — проверь интернет/настройки Firebase", false);
+      });
+    }, 500);
+  }
+
+  function serializeState(){
+    return {
+      version:1,
+      savedAt:new Date().toISOString(),
+      rows:Array.from(rows.values()),
+      todos:todos,
+    };
+  }
+
+  let lsSaveTimer = null;
+  function saveToLocalStorage(){
+    clearTimeout(lsSaveTimer);
+    lsSaveTimer = setTimeout(() => {
+      try{
+        localStorage.setItem(LS_KEY, JSON.stringify(serializeState()));
+      } catch(err){
+        // localStorage может быть недоступен (приватный режим браузера,
+        // ограничения окружения предпросмотра и т.п.) — тихо пропускаем,
+        // ручные кнопки "Сохранить/Загрузить прогресс" всё ещё работают
+        console.warn("Автосохранение недоступно:", err);
+      }
+    }, 400);
+  }
+
+  function loadFromLocalStorage(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return false;
+      const data = JSON.parse(raw);
+      rows = new Map();
+      (data.rows || []).forEach(r => {
+        if(r.username) rows.set(normUser(r.username), r);
+      });
+      todos = data.todos || [];
+      return true;
+    } catch(err){
+      console.warn("Не смог прочитать автосохранение:", err);
+      return false;
+    }
+  }
+
+  function saveJson(){
+    const payload = serializeState();
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    const d = new Date();
+    a.download = `lachuga_crm_${d.toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showStatus("Прогресс сохранён", true);
+  }
+
+  function loadJson(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const data = JSON.parse(e.target.result);
+        rows = new Map();
+        (data.rows || []).forEach(r => {
+          if(r.username) rows.set(normUser(r.username), r);
+        });
+        todos = data.todos || [];
+        showStatus(`Загружено: ${rows.size} каналов, ${todos.length} задач`, true);
+        render();
+      } catch(err){
+        showStatus("Не смог прочитать файл сохранения", false);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  let statusTimer = null;
+  function showStatus(text, ok){
+    const el = document.getElementById("statusPill");
+    el.textContent = text;
+    el.className = "status-pill show" + (ok ? " ok" : "");
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => el.classList.remove("show"), 3500);
+  }
+
+  // ---------------- filtering / sorting ----------------
+  function getFiltered(){
+    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+    const fStage = document.getElementById("filterStage").value;
+    const fOutcome = document.getElementById("filterOutcome").value;
+    const fLang = document.getElementById("filterLang").value;
+    const fMinSubs = Number(document.getElementById("filterMinSubs").value) || 0;
+    const fMinPct = document.getElementById("filterMinPct").value;
+
+    let list = Array.from(rows.values());
+
+    // раздел (Новые / Основной / Успех) — применяется раньше остальных фильтров
+    if(currentView === "new"){
+      list = list.filter(r => Number(r.stage||0) === 0);
+    } else if(currentView === "success"){
+      list = list.filter(r => r.outcome === "partner_active");
+    } else {
+      list = list.filter(r => Number(r.stage||0) >= 1 && r.outcome !== "partner_active");
+    }
+
+    if(q){
+      list = list.filter(r =>
+        (r.username||"").toLowerCase().includes(q) ||
+        (r.title||"").toLowerCase().includes(q) ||
+        (r.about||"").toLowerCase().includes(q) ||
+        (r.contact||"").toLowerCase().includes(q) ||
+        (r.notes||"").toLowerCase().includes(q)
+      );
+    }
+    if(fStage !== "") list = list.filter(r => Number(r.stage||0) === Number(fStage));
+    if(fOutcome) list = list.filter(r => (r.outcome||"waiting") === fOutcome);
+    if(fMinPct !== "") list = list.filter(r => Number(r.commissionPercent || 0) >= Number(fMinPct));
+    if(fLang){
+      list = list.filter(r => langClass(r.language) === fLang || (fLang==="en" && !langClass(r.language) && r.language));
+    }
+    if(fMinSubs) list = list.filter(r => (r.subscribers||0) >= fMinSubs);
+
+    list.sort((a,b) => {
+      if(currentView === "new"){
+        // в "Новых" всегда сортируем по срочности (кто ближе к дедлайну) —
+        // сортировка колонками тут не так важна, как не забыть про горящие
+        const da = deadlineInfo(a.dateAdded);
+        const db = deadlineInfo(b.dateAdded);
+        return da.hoursLeft - db.hoursLeft;
+      }
+      let av = a[sortKey], bv = b[sortKey];
+      if(sortKey === "stage"){ av = Number(a.stage||0); bv = Number(b.stage||0); }
+      if(sortKey === "outcome"){ av = OUTCOME_META[a.outcome||"waiting"]?.label || ""; bv = OUTCOME_META[b.outcome||"waiting"]?.label || ""; }
+      if(typeof av === "string") av = av.toLowerCase();
+      if(typeof bv === "string") bv = bv.toLowerCase();
+      if(av === undefined || av === "") av = sortDir === 1 ? "\uffff" : "";
+      if(bv === undefined || bv === "") bv = sortDir === 1 ? "\uffff" : "";
+      if(av < bv) return -1 * sortDir;
+      if(av > bv) return 1 * sortDir;
+      return 0;
+    });
+
+    return list;
+  }
+
+  // ---------------- render ----------------
+  function renderNavCounts(){
+    const all = Array.from(rows.values());
+    const newCount = all.filter(r => Number(r.stage||0) === 0).length;
+    const successCount = all.filter(r => r.outcome === "partner_active").length;
+    const mainCount = all.filter(r => Number(r.stage||0) >= 1 && r.outcome !== "partner_active").length;
+    document.getElementById("navCountNew").textContent = newCount;
+    document.getElementById("navCountMain").textContent = mainCount;
+    document.getElementById("navCountSuccess").textContent = successCount;
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.view === currentView);
+    });
+  }
+
+  function switchView(view){
+    currentView = view;
+    document.getElementById("navSidebar").classList.remove("show");
+    document.getElementById("navOverlay").classList.remove("show");
+    render();
+  }
+
+  function renderHero(){
+    const all = Array.from(rows.values());
+    const total = all.length;
+    const written = all.filter(r => Number(r.stage||0) >= 1).length;
+    const stage2 = all.filter(r => Number(r.stage||0) === 2).length;
+    const negotiating = all.filter(r => Number(r.stage||0) === 3).length;
+    const partnerActive = all.filter(r => r.outcome === "partner_active").length;
+    const closed = all.filter(r => r.outcome === "no_response_final" || r.outcome === "declined").length;
+    const cards = [
+      {cls:"fc-total", n: total, lbl:"Всего каналов"},
+      {cls:"fc-sent", n: written, lbl:"Написано (всего)"},
+      {cls:"fc-followup", n: stage2, lbl:"Сообщение 2 отправлено"},
+      {cls:"fc-interested", n: negotiating, lbl:"Переговоры"},
+      {cls:"fc-partner", n: partnerActive, lbl:"Партнёрка активна"},
+      {cls:"fc-closed", n: closed, lbl:"Закрыто без результата"},
+    ];
+    document.getElementById("hero").innerHTML = cards.map(c => `
+      <div class="funnel-card ${c.cls}">
+        <div class="n">${c.n}</div>
+        <div class="lbl">${c.lbl}</div>
+        <div class="bar" style="width:${total ? Math.min(100,(c.n/total)*100) : 0}%"></div>
+      </div>
+    `).join("");
+  }
+
+  function renderTableHead(){
+    const tr = document.getElementById("tableHeadRow");
+    tr.innerHTML = COLUMNS.map(col => {
+      const sorted = col.key === sortKey;
+      const arrow = sorted ? (sortDir === 1 ? "▲" : "▼") : "";
+      return `<th data-key="${col.key}" class="${sorted?'sorted':''}">${col.label}<span class="arrow">${arrow}</span></th>`;
+    }).join("");
+    tr.querySelectorAll("th").forEach(th => {
+      th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        const col = COLUMNS.find(c => c.key === key);
+        if(!col || !col.sortable) return;
+        if(sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = col.num ? -1 : 1; }
+        render();
+      });
+    });
+  }
+
+  function stageOptionsHtml(selected){
+    return Object.entries(STAGE_META).map(([k,v]) =>
+      `<option value="${k}" ${Number(k)===Number(selected)?"selected":""}>${v.label}</option>`).join("");
+  }
+  function outcomeOptionsHtml(selected){
+    return Object.entries(OUTCOME_META).map(([k,v]) =>
+      `<option value="${k}" ${k===(selected||"waiting")?"selected":""}>${v.label}</option>`).join("");
+  }
+
+  function renderTable(){
+    const list = getFiltered();
+    document.getElementById("filteredCount").textContent = `Показано: ${list.length} из ${rows.size}`;
+
+    const table = document.getElementById("dataTable");
+    const empty = document.getElementById("emptyState");
+    if(rows.size === 0){ table.style.display = "none"; empty.style.display = "block"; return; }
+    table.style.display = "table"; empty.style.display = "none";
+
+    const tbody = document.getElementById("tableBody");
+    const frag = document.createDocumentFragment();
+
+    list.forEach(r => {
+      const tr = document.createElement("tr");
+      if(r.username === openUsername) tr.classList.add("is-open");
+      const lc = langClass(r.language);
+      tr.innerHTML = `
+        <td class="col-username"><a href="https://t.me/${r.username}" target="_blank" rel="noopener">@${escapeHtml(r.username)}</a></td>
+        <td class="col-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</td>
+        <td class="col-num">${fmtNum(r.subscribers)}</td>
+        <td class="col-num">${r.er ? fmtEr(r.er) : ""}</td>
+        <td class="col-lang">${lc ? `<span class="lang-badge ${lc}">${lc}</span>` : escapeHtml(r.language||"")}</td>
+        <td><select class="stage-select stg-${r.stage||0}" data-field="stage" data-user="${r.username}">${stageOptionsHtml(r.stage||0)}</select></td>
+        <td><select class="outcome-select oc-${r.outcome||''}" data-field="outcome" data-user="${r.username}">${outcomeOptionsHtml(r.outcome)}</select></td>
+        <td class="col-num" style="white-space:nowrap;">
+          <input type="number" class="pct-input" min="0" max="100" step="1" placeholder="—" data-field="commissionPercent" data-user="${r.username}" value="${r.commissionPercent === "" || r.commissionPercent === undefined ? "" : r.commissionPercent}">
+          <button class="row-btn small" data-calc="${r.username}" title="Рассчитать % по подписчикам и ER" style="padding:5px 7px; margin-left:3px;">⚡</button>
+        </td>
+        <td class="col-deadline">${currentView === "new" ? deadlineBadgeHtml(r.dateAdded) : ""}</td>
+        <td class="col-notes-flag">${r.notes ? '<span class="notes-dot" title="есть заметка"></span>' : ""}</td>
+        <td style="white-space:nowrap;">
+          <button class="row-btn" data-open="${r.username}">Детали</button>
+          <button class="row-btn" data-channel="${r.username}" title="Открыть сам канал">Канал</button>
+          <button class="row-btn" data-admin="${r.username}" title="Открыть чат с админом">Админ</button>
+          <button class="row-btn danger" data-del="${r.username}" title="Удалить канал из CRM">×</button>
+        </td>
+      `;
+      frag.appendChild(tr);
+    });
+    tbody.innerHTML = "";
+    tbody.appendChild(frag);
+
+    tbody.querySelectorAll("select[data-field='stage']").forEach(sel => {
+      sel.addEventListener("change", (e) => {
+        const row = rows.get(e.target.dataset.user);
+        if(!row) return;
+        applyStageChange(row, e.target.value);
+        e.target.className = "stage-select stg-" + row.stage;
+        renderHero();
+      });
+    });
+    tbody.querySelectorAll("select[data-field='outcome']").forEach(sel => {
+      sel.addEventListener("change", (e) => {
+        const row = rows.get(e.target.dataset.user);
+        if(!row) return;
+        applyOutcomeChange(row, e.target.value);
+        e.target.className = "outcome-select oc-" + row.outcome;
+        renderHero();
+      });
+    });
+    tbody.querySelectorAll("input[data-field='commissionPercent']").forEach(inp => {
+      inp.addEventListener("change", (e) => {
+        const row = rows.get(e.target.dataset.user);
+        if(!row) return;
+        const v = e.target.value;
+        row.commissionPercent = v === "" ? "" : Math.max(0, Math.min(100, Number(v) || 0));
+        if(v !== "" && row.commissionPercent !== Number(v)) e.target.value = row.commissionPercent;
+      });
+    });
+    tbody.querySelectorAll("input[type='checkbox'][data-field]").forEach(cb => {
+      cb.addEventListener("change", (e) => {
+        const row = rows.get(e.target.dataset.user);
+        if(!row) return;
+        row[e.target.dataset.field] = e.target.checked;
+      });
+    });
+    tbody.querySelectorAll("button[data-open]").forEach(btn => {
+      btn.addEventListener("click", () => openDrawer(btn.dataset.open));
+    });
+    tbody.querySelectorAll("button[data-channel]").forEach(btn => {
+      btn.addEventListener("click", () => openChannelChat(btn.dataset.channel));
+    });
+    tbody.querySelectorAll("button[data-admin]").forEach(btn => {
+      btn.addEventListener("click", () => openAdminChat(btn.dataset.admin));
+    });
+    tbody.querySelectorAll("button[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const uname = btn.dataset.del;
+        const row = rows.get(uname);
+        if(!row) return;
+        if(confirm(`Удалить @${uname} из CRM насовсем?`)){
+          rows.delete(uname);
+          if(openUsername === uname) closeDrawer();
+          render();
+        }
+      });
+    });
+    tbody.querySelectorAll("button[data-calc]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const row = rows.get(btn.dataset.calc);
+        if(!row) return;
+        row.commissionPercent = calcCommissionPercent(row.subscribers, row.er);
+        render();
+      });
+    });
+  }
+
+  function render(){
+    renderNavCounts();
+    renderHero();
+    renderTableHead();
+    renderTable();
+    renderTodos();
+    renderTasks();
+    saveToLocalStorage();
+    saveToFirebase();
+  }
+
+  function extractTelegramHandle(text){
+    if(!text) return null;
+    let m = text.match(/@([a-zA-Z0-9_]{4,32})/);
+    if(m) return m[1];
+    m = text.match(/t\.me\/([a-zA-Z0-9_]{4,32})/i);
+    if(m) return m[1];
+    return null;
+  }
+
+  function applyStageChange(row, newStage){
+    row.stage = Number(newStage);
+    const today = todayISO();
+    row.lastActionDate = today;
+    if(row.stage === 1) row.dateStage1 = today;
+    if(row.stage === 2) row.dateStage2 = today;
+    // сброс "ответа" на ждём — раз мы только что написали новое сообщение,
+    // часы ожидания идут заново. Но не трогаем уже закрытые/успешные исходы.
+    if(!TERMINAL_OUTCOMES.has(row.outcome)){
+      row.outcome = "waiting";
+    }
+  }
+
+  // Автоrasчёт % партнёрки по масштабу канала — подписчики + ER-бонус.
+  // Меняй пороги здесь, если условия партнёрки поменяются — это единственное
+  // место, где они теперь живут (не в отдельном документе).
+  function calcCommissionPercent(subscribers, er){
+    const subs = Number(subscribers) || 0;
+    const erVal = Number(er) || 0;
+    let base;
+    if(subs < 5000) base = 30;
+    else if(subs < 20000) base = 35;
+    else if(subs < 50000) base = 40;
+    else base = 45;
+    if(erVal >= 9) base += 5;
+    return Math.min(50, base);
+  }
+
+  function applyOutcomeChange(row, newOutcome){
+    row.outcome = newOutcome;
+    row.lastActionDate = todayISO();
+  }
+
+  function openChannelChat(uname){
+    window.open(`https://t.me/${uname}`, "_blank");
+  }
+
+  function openAdminChat(uname){
+    const row = rows.get(uname);
+    const adminHandle = row ? extractTelegramHandle(row.contact) : null;
+    if(adminHandle){
+      window.open(`https://t.me/${adminHandle}`, "_blank");
+    } else {
+      showStatus(`Контакт админа не найден — открыл канал @${uname}, ищи, кому писать, вручную`, false);
+      window.open(`https://t.me/${uname}`, "_blank");
+    }
+  }
+
+  // ---------------- drawer ----------------
+  function openDrawer(uname){
+    const row = rows.get(uname);
+    if(!row) return;
+    openUsername = uname;
+
+    document.getElementById("drawerTitle").textContent = row.title || ("@" + uname);
+    document.getElementById("drawerSub").innerHTML = `<a href="https://t.me/${uname}" target="_blank" rel="noopener">t.me/${uname}</a> · ${fmtNum(row.subscribers)} подписчиков`;
+    document.getElementById("drawerStage").innerHTML = stageOptionsHtml(row.stage||0);
+    document.getElementById("drawerOutcome").innerHTML = outcomeOptionsHtml(row.outcome);
+    document.getElementById("drawerPercent").value = row.commissionPercent === "" || row.commissionPercent === undefined ? "" : row.commissionPercent;
+    document.getElementById("drawerDates").innerHTML =
+      `Добавлен: ${row.dateAdded || "—"}<br>Сообщение 1: ${row.dateStage1 || "—"}<br>Сообщение 2: ${row.dateStage2 || "—"}<br>Последнее действие: ${row.lastActionDate || "—"}`;
+    document.getElementById("drawerNotes").value = row.notes || "";
+    const contactHandle = extractTelegramHandle(row.contact);
+    document.getElementById("drawerContact").innerHTML = row.contact
+      ? (contactHandle
+          ? `${escapeHtml(row.contact)} — <a href="https://t.me/${contactHandle}" target="_blank" rel="noopener">открыть чат @${contactHandle}</a>`
+          : escapeHtml(row.contact))
+      : "—";
+    document.getElementById("drawerAbout").textContent = row.about || "—";
+    document.getElementById("drawerMetrics").textContent =
+      `ER: ${row.er ? fmtEr(row.er)+"%" : "—"} · Язык: ${row.language || "—"} · Активность: ${row.lastActivity || "—"} · Источник: ${row.source || "—"}`;
+
+    document.getElementById("overlay").classList.add("show");
+    document.getElementById("drawer").classList.add("show");
+    render();
+  }
+  function closeDrawer(){
+    openUsername = null;
+    document.getElementById("overlay").classList.remove("show");
+    document.getElementById("drawer").classList.remove("show");
+    render();
+  }
+  function saveDrawerField(field, value){
+    if(!openUsername) return;
+    const row = rows.get(openUsername);
+    if(!row) return;
+    row[field] = value;
+  }
+
+  // ---------------- todos ----------------
+  // ---------------- tasks (авто-вычисляемые follow-up по срокам) ----------------
+  function deadlineInfo(dateAddedStr){
+    if(!dateAddedStr) return {hoursLeft: -9999, overdue: true};
+    const added = new Date(dateAddedStr + "T00:00:00");
+    if(Number.isNaN(added.getTime())) return {hoursLeft: -9999, overdue: true};
+    const deadline = new Date(added.getTime() + NEW_DEADLINE_HOURS * 3600000);
+    const hoursLeft = (deadline - new Date()) / 3600000;
+    return {hoursLeft, overdue: hoursLeft < 0};
+  }
+
+  function deadlineBadgeHtml(dateAddedStr){
+    const info = deadlineInfo(dateAddedStr);
+    const h = Math.round(Math.abs(info.hoursLeft));
+    if(info.overdue) return `<span class="deadline-badge over">просрочено ${h}ч</span>`;
+    if(info.hoursLeft <= 6) return `<span class="deadline-badge soon">осталось ${h}ч</span>`;
+    return `<span class="deadline-badge ok">осталось ${h}ч</span>`;
+  }
+
+  function daysSince(dateStr){
+    if(!dateStr) return null;
+    const then = new Date(dateStr + "T00:00:00");
+    if(Number.isNaN(then.getTime())) return null;
+    const now = new Date();
+    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.floor((today0 - then) / 86400000);
+  }
+
+  function computeTasks(){
+    const tasks = [];
+    rows.forEach(r => {
+      const stage = Number(r.stage || 0);
+      const outcome = r.outcome || "waiting";
+      if(stage === 0) return;                     // ещё не писали — нечего фоллоуапить
+      if(TERMINAL_OUTCOMES.has(outcome)) return;   // закрыто / успех — задач больше нет
+
+      const d = daysSince(r.lastActionDate);
+      if(d === null) return; // нет даты — не можем посчитать просрочку
+
+      if(outcome === "retry"){
+        tasks.push({username:r.username, title:r.title, days:d,
+          reason:`Помечено "написать ещё раз" — стадия: ${STAGE_META[stage].label}`});
+        return;
+      }
+      if(outcome === "thinking"){
+        if(d >= TASK_THRESHOLD_DAYS.thinking){
+          tasks.push({username:r.username, title:r.title, days:d,
+            reason:`Сказал(а) "я подумаю" ${d} дн. назад — напомнить о себе`});
+        }
+        return;
+      }
+      // outcome === "waiting"
+      const threshold = TASK_THRESHOLD_DAYS[stage] ?? 3;
+      if(d >= threshold){
+        tasks.push({username:r.username, title:r.title, days:d,
+          reason:`Нет ответа ${d} дн. — ${STAGE_META[stage].label}, написать снова`});
+      }
+    });
+    tasks.sort((a,b) => b.days - a.days);
+    return tasks;
+  }
+
+  function renderTasks(){
+    const tasks = computeTasks();
+    const list = document.getElementById("tasksList");
+    const badge = document.getElementById("tasksBadge");
+
+    if(tasks.length){
+      badge.textContent = tasks.length > 99 ? "99+" : tasks.length;
+      badge.style.display = "block";
+    } else {
+      badge.style.display = "none";
+    }
+
+    list.innerHTML = tasks.map(t => `
+      <div class="task-item" data-open-task="${t.username}">
+        <div class="tname">${escapeHtml(t.title || ("@"+t.username))} <span style="color:var(--text-faint); font-weight:400;">@${escapeHtml(t.username)}</span></div>
+        <div class="treason">${escapeHtml(t.reason)}</div>
+        <span class="tdays ${t.days >= 5 ? 'urgent' : 'mild'}">${t.days} дн.</span>
+      </div>
+    `).join("") || `<div style="padding:16px 14px; color:var(--text-faint); font-size:12.5px;">Задач нет — всё под контролем</div>`;
+
+    list.querySelectorAll("[data-open-task]").forEach(el => {
+      el.addEventListener("click", () => {
+        document.getElementById("tasksPanel").classList.remove("show");
+        openDrawer(el.dataset.openTask);
+      });
+    });
+  }
+
+  function renderTodos(){
+    const list = document.getElementById("todoList");
+    list.innerHTML = todos.map((t, i) => `
+      <div class="todo-item ${t.done?'done':''}">
+        <input type="checkbox" data-idx="${i}" ${t.done?"checked":""}>
+        <span>${escapeHtml(t.text)}</span>
+        <button class="todo-del" data-del="${i}">×</button>
+      </div>
+    `).join("") || `<div style="padding:14px; color:var(--text-faint); font-size:12.5px;">Задач пока нет</div>`;
+
+    list.querySelectorAll("input[type=checkbox]").forEach(cb => {
+      cb.addEventListener("change", () => {
+        todos[Number(cb.dataset.idx)].done = cb.checked;
+        renderTodos();
+      });
+    });
+    list.querySelectorAll("button[data-del]").forEach(b => {
+      b.addEventListener("click", () => {
+        todos.splice(Number(b.dataset.del), 1);
+        renderTodos();
+      });
+    });
+  }
+  function addTodo(){
+    const input = document.getElementById("todoInput");
+    const text = input.value.trim();
+    if(!text) return;
+    todos.unshift({text, done:false});
+    input.value = "";
+    renderTodos();
+  }
+
+  // ---------------- wire up ----------------
+  document.getElementById("btnImportXlsx").addEventListener("click", () => document.getElementById("fileInputXlsx").click());
+  document.getElementById("emptyImportBtn").addEventListener("click", () => document.getElementById("fileInputXlsx").click());
+  document.getElementById("fileInputXlsx").addEventListener("change", (e) => {
+    if(e.target.files[0]) importXlsx(e.target.files[0]);
+    e.target.value = "";
+  });
+  document.getElementById("btnLoadJson").addEventListener("click", () => document.getElementById("fileInputJson").click());
+  document.getElementById("fileInputJson").addEventListener("change", (e) => {
+    if(e.target.files[0]) loadJson(e.target.files[0]);
+    e.target.value = "";
+  });
+  document.getElementById("btnSaveJson").addEventListener("click", saveJson);
+  document.getElementById("btnCalcAll").addEventListener("click", () => {
+    let filled = 0;
+    rows.forEach(row => {
+      if(row.commissionPercent === "" || row.commissionPercent === undefined || row.commissionPercent === null){
+        row.commissionPercent = calcCommissionPercent(row.subscribers, row.er);
+        filled++;
+      }
+    });
+    showStatus(`Рассчитано % для ${filled} каналов (заполненные вручную не тронуты)`, true);
+    render();
+  });
+
+  let searchDebounce = null;
+  document.getElementById("searchInput").addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderTable, 180);
+  });
+  ["filterStage","filterOutcome","filterLang"].forEach(id => {
+    document.getElementById(id).addEventListener("change", renderTable);
+  });
+  document.getElementById("filterMinSubs").addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderTable, 180);
+  });
+  document.getElementById("filterMinPct").addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(renderTable, 180);
+  });
+
+  document.getElementById("navBtn").addEventListener("click", () => {
+    document.getElementById("navSidebar").classList.add("show");
+    document.getElementById("navOverlay").classList.add("show");
+  });
+  document.getElementById("navClose").addEventListener("click", () => {
+    document.getElementById("navSidebar").classList.remove("show");
+    document.getElementById("navOverlay").classList.remove("show");
+  });
+  document.getElementById("navOverlay").addEventListener("click", () => {
+    document.getElementById("navSidebar").classList.remove("show");
+    document.getElementById("navOverlay").classList.remove("show");
+  });
+  document.querySelectorAll(".nav-item").forEach(btn => {
+    btn.addEventListener("click", () => switchView(btn.dataset.view));
+  });
+
+  document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+  document.getElementById("overlay").addEventListener("click", closeDrawer);
+  document.getElementById("drawerStage").addEventListener("change", (e) => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    applyStageChange(row, e.target.value);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("drawerOutcome").addEventListener("change", (e) => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    applyOutcomeChange(row, e.target.value);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("drawerPercent").addEventListener("change", (e) => {
+    let v = e.target.value;
+    if(v !== ""){ v = Math.max(0, Math.min(100, Number(v) || 0)); e.target.value = v; }
+    saveDrawerField("commissionPercent", v);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("drawerCalcPercent").addEventListener("click", () => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    row.commissionPercent = calcCommissionPercent(row.subscribers, row.er);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("drawerNotes").addEventListener("input", (e) => saveDrawerField("notes", e.target.value));
+  document.getElementById("drawerOpenChannel").addEventListener("click", () => {
+    if(openUsername) openChannelChat(openUsername);
+  });
+  document.getElementById("drawerOpenAdmin").addEventListener("click", () => {
+    if(openUsername) openAdminChat(openUsername);
+  });
+
+  document.getElementById("qaStage1Today").addEventListener("click", () => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    applyStageChange(row, 1);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("qaStage2Today").addEventListener("click", () => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    applyStageChange(row, 2);
+    render(); openDrawer(openUsername);
+  });
+  document.getElementById("qaNegotiating").addEventListener("click", () => {
+    const row = rows.get(openUsername);
+    if(!row) return;
+    applyStageChange(row, 3);
+    render(); openDrawer(openUsername);
+  });
+
+  document.getElementById("todoFab").addEventListener("click", () => document.getElementById("todoPanel").classList.toggle("show"));
+  document.getElementById("todoClose").addEventListener("click", () => document.getElementById("todoPanel").classList.remove("show"));
+  document.getElementById("tasksFab").addEventListener("click", () => document.getElementById("tasksPanel").classList.toggle("show"));
+  document.getElementById("tasksClose").addEventListener("click", () => document.getElementById("tasksPanel").classList.remove("show"));
+  document.getElementById("todoAddBtn").addEventListener("click", addTodo);
+  document.getElementById("todoInput").addEventListener("keydown", (e) => { if(e.key === "Enter") addTodo(); });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      closeDrawer();
+      document.getElementById("navSidebar").classList.remove("show");
+      document.getElementById("navOverlay").classList.remove("show");
+    }
+  });
+
+  const restored = loadFromLocalStorage();
+  if(restored){
+    showStatus(`Восстановлено автосохранение: ${rows.size} каналов`, true);
+  }
+
+  initFirebase();
+  render();
+})();
+</script>
+</body>
+</html>
