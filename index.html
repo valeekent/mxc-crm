@@ -103,7 +103,7 @@
   .brand .tag{color:var(--text-faint); font-size:12px;}
 
   .toolbar-actions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  #fileInputXlsx, #fileInputJson{display:none;}
+  #fileInputXlsx{display:none;}
 
   .status-pill{
     font-size:11px; color:var(--text-faint); font-family:var(--font-mono);
@@ -293,71 +293,6 @@
   }
   .quick-actions{display:flex; gap:8px; flex-wrap:wrap;}
 
-  /* ---------- todo panel ---------- */
-  #todoPanel{
-    position:fixed; bottom:20px; right:20px; width:300px; max-width:88vw;
-    background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    box-shadow:0 10px 34px rgba(0,0,0,.4); z-index:35;
-    display:none; flex-direction:column; max-height:60vh;
-  }
-  #todoPanel.show{display:flex;}
-  .todo-head{
-    padding:12px 14px; border-bottom:1px solid var(--border-soft);
-    display:flex; justify-content:space-between; align-items:center;
-    font-family:var(--font-display); font-weight:600; font-size:13.5px;
-  }
-  .todo-add{padding:10px 14px; display:flex; gap:6px; border-bottom:1px solid var(--border-soft);}
-  .todo-add input{flex:1;}
-  .todo-list{overflow-y:auto; padding:6px 8px;}
-  .todo-item{
-    display:flex; align-items:flex-start; gap:8px; padding:7px 8px; border-radius:7px; font-size:13px;
-  }
-  .todo-item:hover{background:var(--surface-2);}
-  .todo-item.done span{color:var(--text-faint); text-decoration:line-through;}
-  .todo-item input[type="checkbox"]{margin-top:3px; accent-color:var(--accent);}
-  .todo-item span{flex:1; line-height:1.4;}
-  .todo-del{background:none; border:none; color:var(--text-faint); font-size:15px; padding:0 4px; cursor:pointer;}
-  .todo-del:hover{color:var(--red);}
-  #todoFab{
-    position:fixed; bottom:20px; right:20px; z-index:34;
-    width:46px; height:46px; border-radius:50%;
-    background:var(--accent); color:#1a1206; border:none;
-    font-size:20px; font-weight:700; box-shadow:0 6px 20px rgba(232,166,60,.35);
-  }
-
-  /* ---------- tasks panel (auto-computed follow-ups) ---------- */
-  #tasksPanel{
-    position:fixed; bottom:20px; right:76px; width:340px; max-width:88vw;
-    background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    box-shadow:0 10px 34px rgba(0,0,0,.4); z-index:35;
-    display:none; flex-direction:column; max-height:66vh;
-  }
-  #tasksPanel.show{display:flex;}
-  .task-item{
-    display:flex; flex-direction:column; gap:3px; padding:10px 14px;
-    border-bottom:1px solid var(--border-soft); font-size:12.5px; cursor:pointer;
-  }
-  .task-item:hover{background:var(--surface-2);}
-  .task-item .tname{font-weight:600; color:var(--text); font-size:13px;}
-  .task-item .treason{color:var(--text-dim);}
-  .task-item .tdays{
-    display:inline-block; font-family:var(--font-mono); font-size:11px;
-    padding:1px 7px; border-radius:10px; margin-top:2px; width:fit-content;
-  }
-  .task-item .tdays.urgent{background:#3a1216; color:var(--red);}
-  .task-item .tdays.mild{background:#332411; color:var(--amber);}
-  #tasksFab{
-    position:fixed; bottom:20px; right:76px; z-index:34;
-    width:46px; height:46px; border-radius:50%;
-    background:var(--blue); color:#08121e; border:none;
-    font-size:19px; font-weight:700; box-shadow:0 6px 20px rgba(78,161,255,.35);
-  }
-  #tasksFab .badge{
-    position:absolute; top:-4px; right:-4px; background:var(--red); color:#fff;
-    font-size:10px; font-weight:700; border-radius:9px; min-width:18px; height:18px;
-    line-height:18px; text-align:center; padding:0 3px; font-family:var(--font-mono);
-  }
-
   .empty-state{
     padding:70px 20px; text-align:center; color:var(--text-faint);
   }
@@ -388,11 +323,8 @@
     <div class="toolbar-actions">
       <span class="status-pill" id="statusPill"></span>
       <button id="btnImportXlsx">Импорт XLSX</button>
-      <button id="btnLoadJson" class="ghost">Загрузить сохранение</button>
       <button id="btnCalcAll" class="ghost" title="Заполняет % только там, где поле ещё пустое">⚡ Рассчитать % всем</button>
-      <button id="btnSaveJson" class="primary">Сохранить прогресс</button>
       <input type="file" id="fileInputXlsx" accept=".xlsx,.xls">
-      <input type="file" id="fileInputJson" accept=".json">
     </div>
   </header>
 
@@ -442,28 +374,6 @@
     </div>
   </main>
 
-</div>
-
-<button id="tasksFab" title="Задачи (авто, по срокам)">⏰<span class="badge" id="tasksBadge" style="display:none;"></span></button>
-<div id="tasksPanel">
-  <div class="todo-head">
-    <span>Задачи</span>
-    <button class="drawer-close" id="tasksClose">✕</button>
-  </div>
-  <div class="todo-list" id="tasksList"></div>
-</div>
-
-<button id="todoFab" title="Заметки (ручной список)">✓</button>
-<div id="todoPanel">
-  <div class="todo-head">
-    <span>To-do</span>
-    <button class="drawer-close" id="todoClose">✕</button>
-  </div>
-  <div class="todo-add">
-    <input type="text" id="todoInput" placeholder="Новая задача…">
-    <button class="small primary" id="todoAddBtn">+</button>
-  </div>
-  <div class="todo-list" id="todoList"></div>
 </div>
 
 <div id="navOverlay"></div>
@@ -540,6 +450,10 @@
       <textarea id="drawerNotes" placeholder="Что ответил, договорённости, % партнёрки…"></textarea>
     </div>
     <div class="field-group">
+      <label>Упоминания MEXC</label>
+      <div class="about-box" id="drawerMexc">—</div>
+    </div>
+    <div class="field-group">
       <label>Контакт</label>
       <div class="about-box" id="drawerContact">—</div>
     </div>
@@ -561,7 +475,6 @@
   // ---------------- state ----------------
   /** @type {Map<string, object>} keyed by lowercase username without @ */
   let rows = new Map();
-  let todos = [];
   let sortKey = "subscribers";
   let sortDir = -1;
   let openUsername = null;
@@ -585,22 +498,34 @@
   // стадии/ответы, при которых канал считается "закрытым" — не ждём больше
   // действий и не показываем в задачах-с-таймингом
   const TERMINAL_OUTCOMES = new Set(["no_response_final", "declined", "partner_active"]);
-  // сколько дней тишины считать поводом для задачи "напомнить о себе"
-  const TASK_THRESHOLD_DAYS = {1: 2, 2: 3, 3: 3, thinking: 5};
 
-  const COLUMNS = [
+  const COLUMNS_MAIN = [
     {key:"username",     label:"Username",  sortable:true},
     {key:"title",        label:"Название",  sortable:true},
     {key:"subscribers",  label:"Подп.",     sortable:true, num:true},
     {key:"er",           label:"ER %",      sortable:true, num:true},
+    {key:"mexcCount",    label:"MEXC",      sortable:true, num:true},
     {key:"language",     label:"Язык",      sortable:true},
     {key:"stage",        label:"Стадия",    sortable:true},
     {key:"outcome",      label:"Ответ",     sortable:true},
     {key:"commissionPercent", label:"% партнёрки", sortable:true, num:true},
+    {key:"notesFlag",    label:"",          sortable:false},
+    {key:"open",         label:"",          sortable:false},
+  ];
+  const COLUMNS_NEW = [
+    {key:"username",     label:"Username",  sortable:true},
+    {key:"title",        label:"Название",  sortable:true},
+    {key:"subscribers",  label:"Подп.",     sortable:true, num:true},
+    {key:"er",           label:"ER %",      sortable:true, num:true},
+    {key:"mexcCount",    label:"MEXC",      sortable:true, num:true},
+    {key:"language",     label:"Язык",      sortable:true},
     {key:"deadline",     label:"Дедлайн",   sortable:false},
     {key:"notesFlag",    label:"",          sortable:false},
     {key:"open",         label:"",          sortable:false},
   ];
+  function activeColumns(){
+    return currentView === "new" ? COLUMNS_NEW : COLUMNS_MAIN;
+  }
 
   // ---------------- helpers ----------------
   function normUser(u){
@@ -729,9 +654,9 @@
   // Если оставить пустым — CRM просто работает локально (localStorage),
   // как и раньше, ничего не сломается.
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCnzcJYU7TzYLn0PgTEiIJS7jqwxJjjRTs",
-    databaseURL: "mxc-crm.firebaseapp.com",
-    projectId: "mxc-crm",
+    apiKey: "",
+    databaseURL: "",
+    projectId: "",
   };
   const FIREBASE_PATH = "lachuga_crm_state"; // все, кто подключены к этому же проекту, делят одни данные по этому пути
 
@@ -758,7 +683,6 @@
         applyingRemoteUpdate = true;
         rows = new Map();
         (data.rows || []).forEach(r => { if(r.username) rows.set(normUser(r.username), r); });
-        todos = data.todos || [];
         render();
         applyingRemoteUpdate = false;
         showStatus("Обновлено (совместные данные)", true);
@@ -786,7 +710,6 @@
       version:1,
       savedAt:new Date().toISOString(),
       rows:Array.from(rows.values()),
-      todos:todos,
     };
   }
 
@@ -799,7 +722,7 @@
       } catch(err){
         // localStorage может быть недоступен (приватный режим браузера,
         // ограничения окружения предпросмотра и т.п.) — тихо пропускаем,
-        // ручные кнопки "Сохранить/Загрузить прогресс" всё ещё работают
+        // основной источник правды теперь Firebase (если настроен)
         console.warn("Автосохранение недоступно:", err);
       }
     }, 400);
@@ -814,42 +737,11 @@
       (data.rows || []).forEach(r => {
         if(r.username) rows.set(normUser(r.username), r);
       });
-      todos = data.todos || [];
       return true;
     } catch(err){
       console.warn("Не смог прочитать автосохранение:", err);
       return false;
     }
-  }
-
-  function saveJson(){
-    const payload = serializeState();
-    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    const d = new Date();
-    a.download = `lachuga_crm_${d.toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    showStatus("Прогресс сохранён", true);
-  }
-
-  function loadJson(file){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      try{
-        const data = JSON.parse(e.target.result);
-        rows = new Map();
-        (data.rows || []).forEach(r => {
-          if(r.username) rows.set(normUser(r.username), r);
-        });
-        todos = data.todos || [];
-        showStatus(`Загружено: ${rows.size} каналов, ${todos.length} задач`, true);
-        render();
-      } catch(err){
-        showStatus("Не смог прочитать файл сохранения", false);
-      }
-    };
-    reader.readAsText(file);
   }
 
   let statusTimer = null;
@@ -874,11 +766,11 @@
 
     // раздел (Новые / Основной / Успех) — применяется раньше остальных фильтров
     if(currentView === "new"){
-      list = list.filter(r => Number(r.stage||0) === 0);
+      list = list.filter(r => Number(r.stage||0) === 0 && (r.outcome||"waiting") === "waiting");
     } else if(currentView === "success"){
       list = list.filter(r => r.outcome === "partner_active");
     } else {
-      list = list.filter(r => Number(r.stage||0) >= 1 && r.outcome !== "partner_active");
+      list = list.filter(r => !(Number(r.stage||0) === 0 && (r.outcome||"waiting") === "waiting") && r.outcome !== "partner_active");
     }
 
     if(q){
@@ -944,21 +836,38 @@
 
   function renderHero(){
     const all = Array.from(rows.values());
-    const total = all.length;
-    const written = all.filter(r => Number(r.stage||0) >= 1).length;
-    const stage2 = all.filter(r => Number(r.stage||0) === 2).length;
-    const negotiating = all.filter(r => Number(r.stage||0) === 3).length;
-    const partnerActive = all.filter(r => r.outcome === "partner_active").length;
-    const closed = all.filter(r => r.outcome === "no_response_final" || r.outcome === "declined").length;
-    const cards = [
-      {cls:"fc-total", n: total, lbl:"Всего каналов"},
-      {cls:"fc-sent", n: written, lbl:"Написано (всего)"},
-      {cls:"fc-followup", n: stage2, lbl:"Сообщение 2 отправлено"},
-      {cls:"fc-interested", n: negotiating, lbl:"Переговоры"},
-      {cls:"fc-partner", n: partnerActive, lbl:"Партнёрка активна"},
-      {cls:"fc-closed", n: closed, lbl:"Закрыто без результата"},
-    ];
-    document.getElementById("hero").innerHTML = cards.map(c => `
+    let cards;
+
+    if(currentView === "new"){
+      const inNew = all.filter(r => Number(r.stage||0) === 0 && (r.outcome||"waiting") === "waiting").length;
+      const written = all.filter(r => r.dateAdded && Number(r.stage||0) >= 1).length;
+      const rejected = all.filter(r => r.outcome === "declined").length;
+      cards = [
+        {cls:"fc-total", n: inNew, lbl:"Всего каналов"},
+        {cls:"fc-sent", n: written, lbl:"Написано"},
+        {cls:"fc-closed", n: rejected, lbl:"Откинуто"},
+      ];
+    } else {
+      const total = all.length;
+      const written = all.filter(r => Number(r.stage||0) >= 1).length;
+      const stage2 = all.filter(r => Number(r.stage||0) === 2).length;
+      const negotiating = all.filter(r => Number(r.stage||0) === 3).length;
+      const partnerActive = all.filter(r => r.outcome === "partner_active").length;
+      const closed = all.filter(r => r.outcome === "no_response_final" || r.outcome === "declined").length;
+      cards = [
+        {cls:"fc-total", n: total, lbl:"Всего каналов"},
+        {cls:"fc-sent", n: written, lbl:"Написано (всего)"},
+        {cls:"fc-followup", n: stage2, lbl:"Сообщение 2 отправлено"},
+        {cls:"fc-interested", n: negotiating, lbl:"Переговоры"},
+        {cls:"fc-partner", n: partnerActive, lbl:"Партнёрка активна"},
+        {cls:"fc-closed", n: closed, lbl:"Закрыто без результата"},
+      ];
+    }
+
+    const total = cards[0].n || 1;
+    const hero = document.getElementById("hero");
+    hero.style.gridTemplateColumns = `repeat(${cards.length}, 1fr)`;
+    hero.innerHTML = cards.map(c => `
       <div class="funnel-card ${c.cls}">
         <div class="n">${c.n}</div>
         <div class="lbl">${c.lbl}</div>
@@ -969,7 +878,8 @@
 
   function renderTableHead(){
     const tr = document.getElementById("tableHeadRow");
-    tr.innerHTML = COLUMNS.map(col => {
+    const cols = activeColumns();
+    tr.innerHTML = cols.map(col => {
       const sorted = col.key === sortKey;
       const arrow = sorted ? (sortDir === 1 ? "▲" : "▼") : "";
       return `<th data-key="${col.key}" class="${sorted?'sorted':''}">${col.label}<span class="arrow">${arrow}</span></th>`;
@@ -977,7 +887,7 @@
     tr.querySelectorAll("th").forEach(th => {
       th.addEventListener("click", () => {
         const key = th.dataset.key;
-        const col = COLUMNS.find(c => c.key === key);
+        const col = cols.find(c => c.key === key);
         if(!col || !col.sortable) return;
         if(sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = col.num ? -1 : 1; }
         render();
@@ -1005,32 +915,56 @@
 
     const tbody = document.getElementById("tableBody");
     const frag = document.createDocumentFragment();
+    const isNew = currentView === "new";
 
     list.forEach(r => {
       const tr = document.createElement("tr");
       if(r.username === openUsername) tr.classList.add("is-open");
       const lc = langClass(r.language);
-      tr.innerHTML = `
-        <td class="col-username"><a href="https://t.me/${r.username}" target="_blank" rel="noopener">@${escapeHtml(r.username)}</a></td>
-        <td class="col-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</td>
-        <td class="col-num">${fmtNum(r.subscribers)}</td>
-        <td class="col-num">${r.er ? fmtEr(r.er) : ""}</td>
-        <td class="col-lang">${lc ? `<span class="lang-badge ${lc}">${lc}</span>` : escapeHtml(r.language||"")}</td>
-        <td><select class="stage-select stg-${r.stage||0}" data-field="stage" data-user="${r.username}">${stageOptionsHtml(r.stage||0)}</select></td>
-        <td><select class="outcome-select oc-${r.outcome||''}" data-field="outcome" data-user="${r.username}">${outcomeOptionsHtml(r.outcome)}</select></td>
-        <td class="col-num" style="white-space:nowrap;">
-          <input type="number" class="pct-input" min="0" max="100" step="1" placeholder="—" data-field="commissionPercent" data-user="${r.username}" value="${r.commissionPercent === "" || r.commissionPercent === undefined ? "" : r.commissionPercent}">
-          <button class="row-btn small" data-calc="${r.username}" title="Рассчитать % по подписчикам и ER" style="padding:5px 7px; margin-left:3px;">⚡</button>
-        </td>
-        <td class="col-deadline">${currentView === "new" ? deadlineBadgeHtml(r.dateAdded) : ""}</td>
-        <td class="col-notes-flag">${r.notes ? '<span class="notes-dot" title="есть заметка"></span>' : ""}</td>
-        <td style="white-space:nowrap;">
-          <button class="row-btn" data-open="${r.username}">Детали</button>
-          <button class="row-btn" data-channel="${r.username}" title="Открыть сам канал">Канал</button>
-          <button class="row-btn" data-admin="${r.username}" title="Открыть чат с админом">Админ</button>
-          <button class="row-btn danger" data-del="${r.username}" title="Удалить канал из CRM">×</button>
-        </td>
-      `;
+      const mexcCell = `<td class="col-num" title="${escapeHtml(r.mexcQuotes||'')}">${r.mexcCount || 0}</td>`;
+
+      if(isNew){
+        tr.innerHTML = `
+          <td class="col-username"><a href="https://t.me/${r.username}" target="_blank" rel="noopener">@${escapeHtml(r.username)}</a></td>
+          <td class="col-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</td>
+          <td class="col-num">${fmtNum(r.subscribers)}</td>
+          <td class="col-num">${r.er ? fmtEr(r.er) : ""}</td>
+          ${mexcCell}
+          <td class="col-lang">${lc ? `<span class="lang-badge ${lc}">${lc}</span>` : escapeHtml(r.language||"")}</td>
+          <td class="col-deadline">${deadlineBadgeHtml(r.dateAdded)}</td>
+          <td class="col-notes-flag">${r.notes ? '<span class="notes-dot" title="есть заметка"></span>' : ""}</td>
+          <td style="white-space:nowrap;">
+            <button class="row-btn" data-open="${r.username}">Детали</button>
+            <button class="row-btn" data-channel="${r.username}" title="Открыть сам канал">Канал</button>
+            <button class="row-btn" data-admin="${r.username}" title="Открыть чат с админом">Админ</button>
+            <button class="row-btn" style="border-color:var(--green); color:var(--green);" data-success="${r.username}" title="Проверено, первое сообщение отправлено">Success</button>
+            <button class="row-btn" style="border-color:var(--red); color:var(--red);" data-failed="${r.username}" title="Не подходит, отклонить">Failed</button>
+            <button class="row-btn" data-comment="${r.username}" title="Быстрая заметка">Comment</button>
+          </td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td class="col-username"><a href="https://t.me/${r.username}" target="_blank" rel="noopener">@${escapeHtml(r.username)}</a></td>
+          <td class="col-title" title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</td>
+          <td class="col-num">${fmtNum(r.subscribers)}</td>
+          <td class="col-num">${r.er ? fmtEr(r.er) : ""}</td>
+          ${mexcCell}
+          <td class="col-lang">${lc ? `<span class="lang-badge ${lc}">${lc}</span>` : escapeHtml(r.language||"")}</td>
+          <td><select class="stage-select stg-${r.stage||0}" data-field="stage" data-user="${r.username}">${stageOptionsHtml(r.stage||0)}</select></td>
+          <td><select class="outcome-select oc-${r.outcome||''}" data-field="outcome" data-user="${r.username}">${outcomeOptionsHtml(r.outcome)}</select></td>
+          <td class="col-num" style="white-space:nowrap;">
+            <input type="number" class="pct-input" min="0" max="100" step="1" placeholder="—" data-field="commissionPercent" data-user="${r.username}" value="${r.commissionPercent === "" || r.commissionPercent === undefined ? "" : r.commissionPercent}">
+            <button class="row-btn small" data-calc="${r.username}" title="Рассчитать % по подписчикам и ER" style="padding:5px 7px; margin-left:3px;">⚡</button>
+          </td>
+          <td class="col-notes-flag">${r.notes ? '<span class="notes-dot" title="есть заметка"></span>' : ""}</td>
+          <td style="white-space:nowrap;">
+            <button class="row-btn" data-open="${r.username}">Детали</button>
+            <button class="row-btn" data-channel="${r.username}" title="Открыть сам канал">Канал</button>
+            <button class="row-btn" data-admin="${r.username}" title="Открыть чат с админом">Админ</button>
+            <button class="row-btn danger" data-del="${r.username}" title="Удалить канал из CRM">×</button>
+          </td>
+        `;
+      }
       frag.appendChild(tr);
     });
     tbody.innerHTML = "";
@@ -1079,6 +1013,30 @@
     tbody.querySelectorAll("button[data-admin]").forEach(btn => {
       btn.addEventListener("click", () => openAdminChat(btn.dataset.admin));
     });
+    tbody.querySelectorAll("button[data-success]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const row = rows.get(btn.dataset.success);
+        if(!row) return;
+        applyStageChange(row, 1); // проверено, первое сообщение отправлено — уходит в "Основной"
+        render();
+      });
+    });
+    tbody.querySelectorAll("button[data-failed]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const row = rows.get(btn.dataset.failed);
+        if(!row) return;
+        applyOutcomeChange(row, "declined"); // не подходит — уходит из "Новые", остаётся видно в "Основной"
+        render();
+      });
+    });
+    tbody.querySelectorAll("button[data-comment]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const row = rows.get(btn.dataset.comment);
+        if(!row) return;
+        const text = prompt("Заметка по каналу:", row.notes || "");
+        if(text !== null){ row.notes = text; render(); }
+      });
+    });
     tbody.querySelectorAll("button[data-del]").forEach(btn => {
       btn.addEventListener("click", () => {
         const uname = btn.dataset.del;
@@ -1106,8 +1064,6 @@
     renderHero();
     renderTableHead();
     renderTable();
-    renderTodos();
-    renderTasks();
     saveToLocalStorage();
     saveToFirebase();
   }
@@ -1183,6 +1139,10 @@
     document.getElementById("drawerDates").innerHTML =
       `Добавлен: ${row.dateAdded || "—"}<br>Сообщение 1: ${row.dateStage1 || "—"}<br>Сообщение 2: ${row.dateStage2 || "—"}<br>Последнее действие: ${row.lastActionDate || "—"}`;
     document.getElementById("drawerNotes").value = row.notes || "";
+    const mexcCount = row.mexcCount || 0;
+    document.getElementById("drawerMexc").innerHTML = mexcCount
+      ? `<b style="color:var(--accent);">${mexcCount}</b> упоминаний в выборке постов<br><br>${escapeHtml(row.mexcQuotes || "").replace(/ \| /g, "<br><br>")}`
+      : "Упоминаний не найдено в выборке постов";
     const contactHandle = extractTelegramHandle(row.contact);
     document.getElementById("drawerContact").innerHTML = row.contact
       ? (contactHandle
@@ -1229,109 +1189,6 @@
     return `<span class="deadline-badge ok">осталось ${h}ч</span>`;
   }
 
-  function daysSince(dateStr){
-    if(!dateStr) return null;
-    const then = new Date(dateStr + "T00:00:00");
-    if(Number.isNaN(then.getTime())) return null;
-    const now = new Date();
-    const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return Math.floor((today0 - then) / 86400000);
-  }
-
-  function computeTasks(){
-    const tasks = [];
-    rows.forEach(r => {
-      const stage = Number(r.stage || 0);
-      const outcome = r.outcome || "waiting";
-      if(stage === 0) return;                     // ещё не писали — нечего фоллоуапить
-      if(TERMINAL_OUTCOMES.has(outcome)) return;   // закрыто / успех — задач больше нет
-
-      const d = daysSince(r.lastActionDate);
-      if(d === null) return; // нет даты — не можем посчитать просрочку
-
-      if(outcome === "retry"){
-        tasks.push({username:r.username, title:r.title, days:d,
-          reason:`Помечено "написать ещё раз" — стадия: ${STAGE_META[stage].label}`});
-        return;
-      }
-      if(outcome === "thinking"){
-        if(d >= TASK_THRESHOLD_DAYS.thinking){
-          tasks.push({username:r.username, title:r.title, days:d,
-            reason:`Сказал(а) "я подумаю" ${d} дн. назад — напомнить о себе`});
-        }
-        return;
-      }
-      // outcome === "waiting"
-      const threshold = TASK_THRESHOLD_DAYS[stage] ?? 3;
-      if(d >= threshold){
-        tasks.push({username:r.username, title:r.title, days:d,
-          reason:`Нет ответа ${d} дн. — ${STAGE_META[stage].label}, написать снова`});
-      }
-    });
-    tasks.sort((a,b) => b.days - a.days);
-    return tasks;
-  }
-
-  function renderTasks(){
-    const tasks = computeTasks();
-    const list = document.getElementById("tasksList");
-    const badge = document.getElementById("tasksBadge");
-
-    if(tasks.length){
-      badge.textContent = tasks.length > 99 ? "99+" : tasks.length;
-      badge.style.display = "block";
-    } else {
-      badge.style.display = "none";
-    }
-
-    list.innerHTML = tasks.map(t => `
-      <div class="task-item" data-open-task="${t.username}">
-        <div class="tname">${escapeHtml(t.title || ("@"+t.username))} <span style="color:var(--text-faint); font-weight:400;">@${escapeHtml(t.username)}</span></div>
-        <div class="treason">${escapeHtml(t.reason)}</div>
-        <span class="tdays ${t.days >= 5 ? 'urgent' : 'mild'}">${t.days} дн.</span>
-      </div>
-    `).join("") || `<div style="padding:16px 14px; color:var(--text-faint); font-size:12.5px;">Задач нет — всё под контролем</div>`;
-
-    list.querySelectorAll("[data-open-task]").forEach(el => {
-      el.addEventListener("click", () => {
-        document.getElementById("tasksPanel").classList.remove("show");
-        openDrawer(el.dataset.openTask);
-      });
-    });
-  }
-
-  function renderTodos(){
-    const list = document.getElementById("todoList");
-    list.innerHTML = todos.map((t, i) => `
-      <div class="todo-item ${t.done?'done':''}">
-        <input type="checkbox" data-idx="${i}" ${t.done?"checked":""}>
-        <span>${escapeHtml(t.text)}</span>
-        <button class="todo-del" data-del="${i}">×</button>
-      </div>
-    `).join("") || `<div style="padding:14px; color:var(--text-faint); font-size:12.5px;">Задач пока нет</div>`;
-
-    list.querySelectorAll("input[type=checkbox]").forEach(cb => {
-      cb.addEventListener("change", () => {
-        todos[Number(cb.dataset.idx)].done = cb.checked;
-        renderTodos();
-      });
-    });
-    list.querySelectorAll("button[data-del]").forEach(b => {
-      b.addEventListener("click", () => {
-        todos.splice(Number(b.dataset.del), 1);
-        renderTodos();
-      });
-    });
-  }
-  function addTodo(){
-    const input = document.getElementById("todoInput");
-    const text = input.value.trim();
-    if(!text) return;
-    todos.unshift({text, done:false});
-    input.value = "";
-    renderTodos();
-  }
-
   // ---------------- wire up ----------------
   document.getElementById("btnImportXlsx").addEventListener("click", () => document.getElementById("fileInputXlsx").click());
   document.getElementById("emptyImportBtn").addEventListener("click", () => document.getElementById("fileInputXlsx").click());
@@ -1339,12 +1196,6 @@
     if(e.target.files[0]) importXlsx(e.target.files[0]);
     e.target.value = "";
   });
-  document.getElementById("btnLoadJson").addEventListener("click", () => document.getElementById("fileInputJson").click());
-  document.getElementById("fileInputJson").addEventListener("change", (e) => {
-    if(e.target.files[0]) loadJson(e.target.files[0]);
-    e.target.value = "";
-  });
-  document.getElementById("btnSaveJson").addEventListener("click", saveJson);
   document.getElementById("btnCalcAll").addEventListener("click", () => {
     let filled = 0;
     rows.forEach(row => {
@@ -1442,13 +1293,6 @@
     applyStageChange(row, 3);
     render(); openDrawer(openUsername);
   });
-
-  document.getElementById("todoFab").addEventListener("click", () => document.getElementById("todoPanel").classList.toggle("show"));
-  document.getElementById("todoClose").addEventListener("click", () => document.getElementById("todoPanel").classList.remove("show"));
-  document.getElementById("tasksFab").addEventListener("click", () => document.getElementById("tasksPanel").classList.toggle("show"));
-  document.getElementById("tasksClose").addEventListener("click", () => document.getElementById("tasksPanel").classList.remove("show"));
-  document.getElementById("todoAddBtn").addEventListener("click", addTodo);
-  document.getElementById("todoInput").addEventListener("keydown", (e) => { if(e.key === "Enter") addTodo(); });
 
   document.addEventListener("keydown", (e) => {
     if(e.key === "Escape"){
