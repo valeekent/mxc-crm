@@ -829,6 +829,7 @@
 
   function switchView(view){
     currentView = view;
+    try{ localStorage.setItem("lachuga_crm_view", view); } catch(err){}
     document.getElementById("navSidebar").classList.remove("show");
     document.getElementById("navOverlay").classList.remove("show");
     render();
@@ -1306,6 +1307,10 @@
   if(restored){
     showStatus(`Восстановлено автосохранение: ${rows.size} каналов`, true);
   }
+  try{
+    const savedView = localStorage.getItem("lachuga_crm_view");
+    if(savedView && ["new","main","success"].includes(savedView)) currentView = savedView;
+  } catch(err){}
 
   initFirebase();
   render();
