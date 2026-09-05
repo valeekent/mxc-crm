@@ -662,6 +662,10 @@
 
   let fbRef = null;
   let fbEnabled = false;
+  let fbReady = false; // становится true только после первого реального ответа
+                        // от Firebase — до этого момента ничего не пишем
+                        // в общую базу, иначе можно затереть данные пустым
+                        // локальным состоянием при первом открытии сайта
   let applyingRemoteUpdate = false; // чтобы не зациклить: применили чужие данные -> не пушим их тут же обратно
 
   function initFirebase(){
@@ -674,18 +678,24 @@
       fbRef = firebase.database().ref(FIREBASE_PATH);
       fbEnabled = true;
       const pill = document.getElementById("syncPill");
-      pill.textContent = "🟢 Общий доступ";
-      pill.style.color = "var(--green)";
+      pill.textContent = "🟡 Подключаюсь…";
+      pill.style.color = "var(--amber)";
 
       fbRef.on("value", (snapshot) => {
         const data = snapshot.val();
+        const isFirstSnapshot = !fbReady;
+        fbReady = true; // помечаем готовность ДО любых return — даже если
+                         // в базе реально пусто (первый запуск проекта),
+                         // это всё равно валидный "настоящий" ответ сервера
+        pill.textContent = "🟢 Общий доступ";
+        pill.style.color = "var(--green)";
         if(!data) return;
         applyingRemoteUpdate = true;
         rows = new Map();
         (data.rows || []).forEach(r => { if(r.username) rows.set(normUser(r.username), r); });
         render();
         applyingRemoteUpdate = false;
-        showStatus("Обновлено (совместные данные)", true);
+        if(!isFirstSnapshot) showStatus("Обновлено (совместные данные)", true);
       });
     } catch(err){
       console.warn("Не смог подключиться к Firebase — работаем локально:", err);
@@ -695,7 +705,7 @@
 
   let fbSaveTimer = null;
   function saveToFirebase(){
-    if(!fbEnabled || applyingRemoteUpdate) return;
+    if(!fbEnabled || !fbReady || applyingRemoteUpdate) return;
     clearTimeout(fbSaveTimer);
     fbSaveTimer = setTimeout(() => {
       fbRef.set(serializeState()).catch(err => {
